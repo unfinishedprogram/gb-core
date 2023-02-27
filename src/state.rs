@@ -81,7 +81,7 @@ impl Default for Gameboy {
             ppu: PPU::default(),
             timer: Timer::default(),
             io_register_state: IORegisterState::default(),
-            boot_rom: include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
+            boot_rom: include_bytes!("roms/dmg_boot.bin").to_vec(),
             booting: true,
             cartridge_state: None,
             ram_bank: 0,
@@ -225,8 +225,8 @@ impl Gameboy {
 
     fn set_gb_mode(&mut self, mode: Mode) {
         self.boot_rom = match mode {
-            Mode::DMG => include_bytes!("../../roms/other/dmg_boot.bin").to_vec(),
-            Mode::GBC(_) => include_bytes!("../../roms/other/cgb_boot.bin").to_vec(),
+            Mode::DMG => include_bytes!("roms/dmg_boot.bin").to_vec(),
+            Mode::GBC(_) => include_bytes!("roms/cgb_boot.bin").to_vec(),
         };
 
         self.w_ram = match mode {

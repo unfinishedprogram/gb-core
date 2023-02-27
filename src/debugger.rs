@@ -66,7 +66,7 @@ impl Log for Debugger {
         cfg!(feature = "debug")
     }
 
-    fn log(&self, record: &log::Record) {
+    fn log(&self, _record: &log::Record) {
         #[cfg(feature = "debug")]
         {
             let args = record.args();
