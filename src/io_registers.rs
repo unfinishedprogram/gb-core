@@ -1,16 +1,16 @@
 use std::ops::{Index, IndexMut};
 
-use serde::{Deserialize, Serialize};
-use sm83::{
-	flags::interrupt,
-	memory_mapper::{Source, SourcedMemoryMapper},
+use gb_sm83::{
+    flags::interrupt,
+    memory_mapper::{Source, SourcedMemoryMapper},
 };
+use serde::{Deserialize, Serialize};
 
 use crate::{
-	state::Mode,
-	util::{bits::*, BigArray},
-	work_ram::BankedWorkRam,
-	Gameboy,
+    state::Mode,
+    util::{bits::*, BigArray},
+    work_ram::BankedWorkRam,
+    Gameboy,
 };
 
 // Timers
@@ -99,223 +99,223 @@ pub const HDMA5: u16 = 0xFF55;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct IORegisterState {
-	#[serde(with = "BigArray")]
-	values: [u8; 0x80],
+    #[serde(with = "BigArray")]
+    values: [u8; 0x80],
 }
 
 impl Default for IORegisterState {
-	fn default() -> Self {
-		Self { values: [0; 0x80] }
-	}
+    fn default() -> Self {
+        Self { values: [0; 0x80] }
+    }
 }
 
 impl Index<u16> for IORegisterState {
-	type Output = u8;
+    type Output = u8;
 
-	fn index(&self, index: u16) -> &Self::Output {
-		&self.values[(index - 0xFF00) as usize]
-	}
+    fn index(&self, index: u16) -> &Self::Output {
+        &self.values[(index - 0xFF00) as usize]
+    }
 }
 
 impl IndexMut<u16> for IORegisterState {
-	fn index_mut(&mut self, index: u16) -> &mut Self::Output {
-		&mut self.values[(index - 0xFF00) as usize]
-	}
+    fn index_mut(&mut self, index: u16) -> &mut Self::Output {
+        &mut self.values[(index - 0xFF00) as usize]
+    }
 }
 
 pub trait IORegisters {
-	fn read_io(&self, addr: u16) -> u8;
-	fn write_io(&mut self, addr: u16, value: u8);
+    fn read_io(&self, addr: u16) -> u8;
+    fn write_io(&mut self, addr: u16, value: u8);
 }
 
 impl IORegisters for Gameboy {
-	fn read_io(&self, addr: u16) -> u8 {
-		match addr {
-			// PPU
-			LCDC => self.ppu.read_lcdc(),
-			SCY => self.ppu.registers.scy,
-			SCX => self.ppu.registers.scx,
-			LYC => self.ppu.registers.lyc,
-			BGP => self.ppu.registers.bgp,
-			OBP0 => self.ppu.registers.obp0,
-			OBP1 => self.ppu.registers.obp1,
-			WY => self.ppu.registers.wy,
-			WX => self.ppu.registers.wx,
-			LY => self.ppu.get_ly(),
-			STAT => self.ppu.registers.stat.read(),
+    fn read_io(&self, addr: u16) -> u8 {
+        match addr {
+            // PPU
+            LCDC => self.ppu.read_lcdc(),
+            SCY => self.ppu.registers.scy,
+            SCX => self.ppu.registers.scx,
+            LYC => self.ppu.registers.lyc,
+            BGP => self.ppu.registers.bgp,
+            OBP0 => self.ppu.registers.obp0,
+            OBP1 => self.ppu.registers.obp1,
+            WY => self.ppu.registers.wy,
+            WX => self.ppu.registers.wx,
+            LY => self.ppu.get_ly(),
+            STAT => self.ppu.registers.stat.read(),
 
-			// Gameboy Color only pallettes
-			0xFF68..=0xFF6B => {
-				if let Mode::GBC(_) = &self.mode {
-					match addr {
-						BGPI => self.ppu.bg_color.read_spec(),
-						BGPD => self.ppu.bg_color.read_data(),
-						OBPI => self.ppu.obj_color.read_spec(),
-						OBPD => self.ppu.obj_color.read_data(),
-						_ => unreachable!("{addr}"),
-					}
-				} else {
-					0xFF
-				}
-			}
+            // Gameboy Color only pallettes
+            0xFF68..=0xFF6B => {
+                if let Mode::GBC(_) = &self.mode {
+                    match addr {
+                        BGPI => self.ppu.bg_color.read_spec(),
+                        BGPD => self.ppu.bg_color.read_data(),
+                        OBPI => self.ppu.obj_color.read_spec(),
+                        OBPD => self.ppu.obj_color.read_data(),
+                        _ => unreachable!("{addr}"),
+                    }
+                } else {
+                    0xFF
+                }
+            }
 
-			// Timer
-			DIV => self.timer.get_div(),
-			TAC => self.timer.get_tac(),
-			TIMA => self.timer.get_tima(),
-			TMA => self.timer.get_tma(),
+            // Timer
+            DIV => self.timer.get_div(),
+            TAC => self.timer.get_tac(),
+            TIMA => self.timer.get_tima(),
+            TMA => self.timer.get_tma(),
 
-			//HDMA
-			HDMA5 => self.dma_controller.read_hdma5(),
+            //HDMA
+            HDMA5 => self.dma_controller.read_hdma5(),
 
-			SVBK => {
-				if let Mode::GBC(_) = &self.mode {
-					self.w_ram.get_bank_number()
-				} else {
-					0xFF
-				}
-			}
-			VBK => {
-				if let Mode::GBC(_) = &self.mode {
-					self.w_ram.get_bank_number()
-				} else {
-					0xFF
-				}
-			}
-			KEY1 => {
-				if let Mode::GBC(state) = &self.mode {
-					state.read_key1()
-				} else {
-					0xFF
-				}
-			}
-			JOYP => {
-				if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
-					(self.raw_joyp_input & 0b1111) | 0b11000000
-				} else if self.io_register_state[addr] & BIT_5 == BIT_5 {
-					((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000
-				} else {
-					0b11001111
-				}
-			}
+            SVBK => {
+                if let Mode::GBC(_) = &self.mode {
+                    self.w_ram.get_bank_number()
+                } else {
+                    0xFF
+                }
+            }
+            VBK => {
+                if let Mode::GBC(_) = &self.mode {
+                    self.w_ram.get_bank_number()
+                } else {
+                    0xFF
+                }
+            }
+            KEY1 => {
+                if let Mode::GBC(state) = &self.mode {
+                    state.read_key1()
+                } else {
+                    0xFF
+                }
+            }
+            JOYP => {
+                if self.io_register_state[JOYP] & BIT_4 == BIT_4 {
+                    (self.raw_joyp_input & 0b1111) | 0b11000000
+                } else if self.io_register_state[addr] & BIT_5 == BIT_5 {
+                    ((self.raw_joyp_input >> 4) & 0b1111) | 0b11000000
+                } else {
+                    0b11001111
+                }
+            }
 
-			// Interrupt requests
-			IF => self.cpu_state.interrupt_request | 0xE0,
-			IE => self.cpu_state.interrupt_enable | 0xE0,
+            // Interrupt requests
+            IF => self.cpu_state.interrupt_request | 0xE0,
+            IE => self.cpu_state.interrupt_enable | 0xE0,
 
-			0xFF03 => 0xFF,
-			0xFF08..0xFF0F => 0xFF,
-			0xFF15 => 0xFF,
-			0xFF1F => 0xFF,
-			0xFF27..0xFF30 => 0xFF,
-			0xFF4E => 0xFF,
-			0xFF57..0xFF68 => 0xFF,
-			0xFF71..0xFF72 => 0xFF,
-			0xFF78..0xFF80 => 0xFF,
+            0xFF03 => 0xFF,
+            0xFF08..0xFF0F => 0xFF,
+            0xFF15 => 0xFF,
+            0xFF1F => 0xFF,
+            0xFF27..0xFF30 => 0xFF,
+            0xFF4E => 0xFF,
+            0xFF57..0xFF68 => 0xFF,
+            0xFF71..0xFF72 => 0xFF,
+            0xFF78..0xFF80 => 0xFF,
 
-			_ => self.io_register_state[addr],
-		}
-	}
+            _ => self.io_register_state[addr],
+        }
+    }
 
-	fn write_io(&mut self, addr: u16, value: u8) {
-		match addr {
-			// PPU
-			LCDC => self
-				.ppu
-				.write_lcdc(value, &mut self.cpu_state.interrupt_request),
+    fn write_io(&mut self, addr: u16, value: u8) {
+        match addr {
+            // PPU
+            LCDC => self
+                .ppu
+                .write_lcdc(value, &mut self.cpu_state.interrupt_request),
 
-			SCY => self.ppu.registers.scy = value,
-			SCX => self.ppu.registers.scx = value,
-			LYC => self
-				.ppu
-				.set_lyc(value, &mut self.cpu_state.interrupt_request),
-			BGP => self.ppu.registers.bgp = value,
-			OBP0 => self.ppu.registers.obp0 = value,
-			OBP1 => self.ppu.registers.obp1 = value,
-			WY => self.ppu.registers.wy = value,
-			WX => self.ppu.registers.wx = value,
-			STAT => self
-				.ppu
-				.write_stat(value, &mut self.cpu_state.interrupt_request),
-			HDMA1 => self.dma_controller.write_source_high(value),
-			HDMA2 => self.dma_controller.write_source_low(value),
-			HDMA3 => self.dma_controller.write_destination_high(value),
-			HDMA4 => self.dma_controller.write_destination_low(value),
-			HDMA5 => {
-				if let Some(request) = self.dma_controller.write_hdma5(value) {
-					self.handle_transfer(request)
-				}
-			}
+            SCY => self.ppu.registers.scy = value,
+            SCX => self.ppu.registers.scx = value,
+            LYC => self
+                .ppu
+                .set_lyc(value, &mut self.cpu_state.interrupt_request),
+            BGP => self.ppu.registers.bgp = value,
+            OBP0 => self.ppu.registers.obp0 = value,
+            OBP1 => self.ppu.registers.obp1 = value,
+            WY => self.ppu.registers.wy = value,
+            WX => self.ppu.registers.wx = value,
+            STAT => self
+                .ppu
+                .write_stat(value, &mut self.cpu_state.interrupt_request),
+            HDMA1 => self.dma_controller.write_source_high(value),
+            HDMA2 => self.dma_controller.write_source_low(value),
+            HDMA3 => self.dma_controller.write_destination_high(value),
+            HDMA4 => self.dma_controller.write_destination_low(value),
+            HDMA5 => {
+                if let Some(request) = self.dma_controller.write_hdma5(value) {
+                    self.handle_transfer(request)
+                }
+            }
 
-			// Timer
-			DIV => self.timer.set_div(value),
-			TAC => self.timer.set_tac(value),
-			TIMA => self.timer.set_tima(value),
-			TMA => self.timer.set_tma(value),
+            // Timer
+            DIV => self.timer.set_div(value),
+            TAC => self.timer.set_tac(value),
+            TIMA => self.timer.set_tima(value),
+            TMA => self.timer.set_tma(value),
 
-			// Gameboy Color only pallettes
-			0xFF68..=0xFF6B => {
-				if let Mode::GBC(_) = &mut self.mode {
-					match addr {
-						BGPI => self.ppu.bg_color.write_spec(value),
-						BGPD => self.ppu.bg_color.write_data(value),
-						OBPI => self.ppu.obj_color.write_spec(value),
-						OBPD => self.ppu.obj_color.write_data(value),
-						_ => unreachable!("{addr}"),
-					}
-				}
-			}
-			SVBK => {
-				self.w_ram.set_bank_number(value);
-			}
-			VBK => {
-				if let Mode::GBC(state) = &mut self.mode {
-					state.set_vram_bank(value);
-				};
-			}
-			KEY1 => {
-				if let Mode::GBC(state) = &mut self.mode {
-					state.write_key1(value);
-				};
-			}
+            // Gameboy Color only pallettes
+            0xFF68..=0xFF6B => {
+                if let Mode::GBC(_) = &mut self.mode {
+                    match addr {
+                        BGPI => self.ppu.bg_color.write_spec(value),
+                        BGPD => self.ppu.bg_color.write_data(value),
+                        OBPI => self.ppu.obj_color.write_spec(value),
+                        OBPD => self.ppu.obj_color.write_data(value),
+                        _ => unreachable!("{addr}"),
+                    }
+                }
+            }
+            SVBK => {
+                self.w_ram.set_bank_number(value);
+            }
+            VBK => {
+                if let Mode::GBC(state) = &mut self.mode {
+                    state.set_vram_bank(value);
+                };
+            }
+            KEY1 => {
+                if let Mode::GBC(state) = &mut self.mode {
+                    state.write_key1(value);
+                };
+            }
 
-			DISABLE_BOOT => {
-				self.booting = false;
-			}
-			SB => self.io_register_state[SB] = value,
-			JOYP => {
-				self.io_register_state[JOYP] = value & 0b00110000;
-			}
-			SC => {
-				if value == 0x81 {
-					self.io_register_state[SC] = 0x01;
-					self.io_register_state[SB] = 0xFF;
-					self.request_interrupt(interrupt::SERIAL);
-				}
-			}
+            DISABLE_BOOT => {
+                self.booting = false;
+            }
+            SB => self.io_register_state[SB] = value,
+            JOYP => {
+                self.io_register_state[JOYP] = value & 0b00110000;
+            }
+            SC => {
+                if value == 0x81 {
+                    self.io_register_state[SC] = 0x01;
+                    self.io_register_state[SB] = 0xFF;
+                    self.request_interrupt(interrupt::SERIAL);
+                }
+            }
 
-			IF => {
-				self.cpu_state.interrupt_request = value & 0b00011111;
-			}
+            IF => {
+                self.cpu_state.interrupt_request = value & 0b00011111;
+            }
 
-			IE => self.cpu_state.interrupt_enable = value & 0b00011111,
-			DMA => {
-				self.io_register_state[DMA] = value;
+            IE => self.cpu_state.interrupt_enable = value & 0b00011111,
+            DMA => {
+                self.io_register_state[DMA] = value;
 
-				// Indexing into HRAM should use work-ram instead.
-				let value = if value > 0xDF { value - 0x20 } else { value };
+                // Indexing into HRAM should use work-ram instead.
+                let value = if value > 0xDF { value - 0x20 } else { value };
 
-				let mut oam_data = vec![0; 0xA0];
-				let real_addr = (value as u16) << 8;
+                let mut oam_data = vec![0; 0xA0];
+                let real_addr = (value as u16) << 8;
 
-				(0..0xA0).for_each(|i| {
-					oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
-				});
+                (0..0xA0).for_each(|i| {
+                    oam_data[i] = self.read_from(real_addr + i as u16, Source::Raw);
+                });
 
-				self.oam_dma.start_oam_dma(oam_data);
-			}
+                self.oam_dma.start_oam_dma(oam_data);
+            }
 
-			_ => self.io_register_state[addr] = value,
-		}
-	}
+            _ => self.io_register_state[addr] = value,
+        }
+    }
 }
