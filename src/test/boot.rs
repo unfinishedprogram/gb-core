@@ -8,25 +8,25 @@ use test::Bencher;
 
 #[bench]
 pub fn bench_boot(b: &mut Bencher) {
-	let mut state = Gameboy::default();
+    let mut state = Gameboy::default();
 
-	b.iter(|| {
-		state.step();
-	})
+    b.iter(|| {
+        state.step();
+    })
 }
 
 lazy_static! {
-	pub static ref BOOTED_EMULATOR: Gameboy = {
-		let mut state = Gameboy::default();
-		// Not a specific rom, just one that has a valid logo and will pass checks
-		// TODO: Make this a custom rom that minimally satisfies the boot requirements
-		let rom = read("../roms/test/dmg-acid2.gb").unwrap();
-		let lcd = GameboyLCD::default();
+    pub static ref BOOTED_EMULATOR: Gameboy = {
+        let mut state = Gameboy::default();
+        // Not a specific rom, just one that has a valid logo and will pass checks
+        // TODO: Make this a custom rom that minimally satisfies the boot requirements
+        let rom = *include_bytes!("../roms/test/dmg-acid2.gb");
+        let lcd = GameboyLCD::default();
 
-		state.bind_lcd(lcd);
-		state.load_rom(&rom, None);
+        state.bind_lcd(lcd);
+        state.load_rom(&rom, None);
 
-		state.run_until_boot();
-		state
-	};
+        state.run_until_boot();
+        state
+    };
 }
