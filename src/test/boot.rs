@@ -1,19 +1,5 @@
-use std::fs::read;
-
 use crate::{lcd::GameboyLCD, Gameboy};
-extern crate test;
-
 use lazy_static::lazy_static;
-use test::Bencher;
-
-#[bench]
-pub fn bench_boot(b: &mut Bencher) {
-    let mut state = Gameboy::default();
-
-    b.iter(|| {
-        state.step();
-    })
-}
 
 lazy_static! {
     pub static ref BOOTED_EMULATOR: Gameboy = {
