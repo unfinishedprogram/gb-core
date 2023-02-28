@@ -31,7 +31,7 @@ pub fn run_screenshot_test(rom: &str, expected: &str, seconds: usize) {
     }
 }
 
-fn compare_lcd(a: &[u8], b: &[u8]) -> bool {
+pub fn compare_lcd(a: &[u8], b: &[u8]) -> bool {
     assert!(
         a.len() == b.len(),
         "Images are not of the same size, a:{}, b:{}",
