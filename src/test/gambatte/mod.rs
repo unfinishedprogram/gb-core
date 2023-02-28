@@ -26,7 +26,7 @@ impl GambatteTest {
     }
 }
 
-#[test_resources("src/test/roms/gambatte/*/*cgb04c_out*.gbc")]
+#[test_resources("test_data/gambatte/*/*cgb04c_out*.gbc")]
 fn exec_test(resource: &str) {
     let test = GambatteTest::new(resource.to_string());
     let output = get_test_output(&test);
