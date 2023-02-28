@@ -1,9 +1,9 @@
 use image::EncodableLayout;
 
-use super::rom_loader::init_emulator_with_rom;
+use super::rom_loader::init_emulator_with_rom_cgb;
 
 pub fn run_screenshot_test(rom: &str, expected: &str, seconds: usize) {
-    let mut state = init_emulator_with_rom(rom);
+    let mut state = init_emulator_with_rom_cgb(rom);
 
     let expected = image::open(expected).expect("Expected Image does not exist");
 

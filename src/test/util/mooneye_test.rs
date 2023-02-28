@@ -1,9 +1,9 @@
 // https://github.com/c-sp/gameboy-test-roms/blob/master/src/howto/mooneye-test-suite.md
 
-use super::rom_loader::init_emulator_with_rom;
+use super::rom_loader::init_emulator_with_rom_cgb;
 
 pub fn run_mooneye_test(rom: &str) {
-    let mut state = init_emulator_with_rom(rom);
+    let mut state = init_emulator_with_rom_cgb(rom);
 
     for _ in 0..20 {
         for _ in 0..1_048_576 {
