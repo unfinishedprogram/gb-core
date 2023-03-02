@@ -124,6 +124,19 @@ impl Gameboy {
         }
     }
 
+    pub fn step_single_frame(&mut self) {
+        let start_frame = self.ppu.frame;
+        while self.ppu.frame == start_frame && self.ppu.is_enabled() {
+            self.step();
+        }
+        if !self.ppu.is_enabled() {
+            let start_cycles = self.get_cycle();
+            while self.get_cycle() - start_cycles < 100000 {
+                self.step();
+            }
+        }
+    }
+
     pub fn step(&mut self) {
         if self.speed_switch_delay > 0 {
             self.speed_switch_delay = self.speed_switch_delay.saturating_sub(1);
