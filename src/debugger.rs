@@ -92,9 +92,9 @@ impl Log for Debugger {
 
 #[derive(Default)]
 pub struct DebuggerState {
-    breakpoints: Vec<Breakpoint>,
+    pub breakpoints: Vec<Breakpoint>,
     pub events: Vec<Event>,
-    running: bool,
+    pub running: bool,
 }
 
 impl DebuggerState {
