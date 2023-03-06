@@ -28,7 +28,7 @@ pub enum Event {
     SpeedSwitch(Speed),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Breakpoint {
     Addr(u16),
     PPUEnterMode(PPUMode),

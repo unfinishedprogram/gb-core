@@ -27,7 +27,7 @@ pub enum FetcherMode {
     Window,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PPUMode {
     HBlank = 0,
     VBlank = 1,
