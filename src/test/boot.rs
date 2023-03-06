@@ -1,4 +1,4 @@
-use crate::{lcd::GameboyLCD, Gameboy};
+use crate::Gameboy;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -6,9 +6,7 @@ lazy_static! {
         let mut state = Gameboy::dmg();
         // Not a specific rom, just one that has a valid logo and will pass checks
         let rom = *include_bytes!("../../test_data/blargg/halt_bug.gb");
-        let lcd = GameboyLCD::default();
 
-        state.bind_lcd(lcd);
         state.load_rom(&rom, None);
 
         state.run_until_boot();
@@ -19,9 +17,7 @@ lazy_static! {
         let mut state = Gameboy::cgb();
         // Not a specific rom, just one that has a valid logo and will pass checks
         let rom = *include_bytes!("../../test_data/blargg/halt_bug.gb");
-        let lcd = GameboyLCD::default();
 
-        state.bind_lcd(lcd);
         state.load_rom(&rom, None);
 
         state.run_until_boot();

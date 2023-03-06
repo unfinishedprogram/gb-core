@@ -44,12 +44,11 @@ impl BlarggTest {
             for _ in 0..1_048_576 {
                 state.step();
             }
-            if let Some(lcd) = &state.ppu.lcd {
-                let actual = lcd.front_buffer();
 
-                if compare_lcd(actual, expected) {
-                    return;
-                }
+            let actual = state.ppu.lcd.front_buffer();
+
+            if compare_lcd(actual, expected) {
+                return;
             }
         }
         panic!("Images do not match!");

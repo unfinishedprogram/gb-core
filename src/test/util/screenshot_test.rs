@@ -14,17 +14,14 @@ pub fn run_screenshot_test(rom: &str, expected: &str, seconds: usize) {
         for _ in 0..1_048_576 {
             state.step();
         }
-        if let Some(lcd) = &state.ppu.lcd {
-            let actual = lcd.front_buffer();
+        let actual = state.ppu.lcd.front_buffer();
 
-            if compare_lcd(actual, expected) {
-                return;
-            }
+        if compare_lcd(actual, expected) {
+            return;
         }
     }
-    let lcd = state.ppu.lcd.expect("No LCD Bound");
 
-    let actual = lcd.front_buffer();
+    let actual = state.ppu.lcd.front_buffer();
 
     if !compare_lcd(actual, expected) {
         panic!("Images are not identical")
