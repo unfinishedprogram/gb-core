@@ -114,6 +114,10 @@ impl DebuggerState {
     pub fn add_breakpoint(&mut self, breakpoint: Breakpoint) {
         self.breakpoints.push(breakpoint);
     }
+
+    pub fn remove_breakpoint(&mut self, breakpoint: Breakpoint) {
+        self.breakpoints.retain(|br| br != &breakpoint);
+    }
 }
 
 pub fn emit(event: Event) {
