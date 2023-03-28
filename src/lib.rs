@@ -19,6 +19,7 @@ mod timer;
 mod util;
 mod work_ram;
 pub use debugger::Debugger;
+pub use gb_sm83;
 pub use state::{Gameboy, Mode};
 
 #[cfg(test)]
